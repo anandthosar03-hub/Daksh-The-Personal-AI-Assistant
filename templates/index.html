@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis AI Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+        }
+        
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .jarvis-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #00ff88, #0066cc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            animation: pulse 2s infinite;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .jarvis-circle:hover {
+            transform: scale(1.1);
+        }
+        
+        .jarvis-circle.listening {
+            animation: listening 1s infinite;
+            background: radial-gradient(circle, #ff6b6b, #ee5a24);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+        
+        @keyframes listening {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .input-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            padding: 10px 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chat-input {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 100%;
+            outline: none;
+        }
+        
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .btn-voice {
+            background: linear-gradient(45deg, #00ff88, #0066cc);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .btn-send {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+        }
+        
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background: linear-gradient(45deg, #0066cc, #004499);
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .assistant-message {
+            background: linear-gradient(45deg, #00ff88, #00cc66);
+            color: #000;
+            margin-right: auto;
+        }
+        
+        .status-text {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            opacity: 0.8;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #00ff88;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="container-fluid py-3">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-4 mb-0">🤖 JARVIS</h1>
+                    <p class="lead">Your AI Voice & Text Assistant</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Interface -->
+        <div class="container flex-grow-1 d-flex flex-column justify-content-center">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <!-- Jarvis Circle -->
+                    <div class="text-center mb-4">
+                        <div class="jarvis-circle" id="jarvisCircle">
+                            <i class="bi bi-mic-fill" style="font-size: 60px;"></i>
+                        </div>
+                        <div class="status-text" id="statusText">Click to speak or type below</div>
+                    </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div class="loading" id="loadingIndicator">
+                        <div class="spinner"></div>
+                        <p>Processing...</p>
+                    </div>
+                    
+                    <!-- Input Container -->
+                    <div class="input-container d-flex align-items-center gap-3 mb-4">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Type your message or click the microphone to speak...">
+                        <button class="btn btn-voice" id="voiceBtn" title="Voice Input">
+                            <i class="bi bi-mic-fill"></i>
+                        </button>
+                        <button class="btn btn-send" id="sendBtn" title="Send Message">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Chat Container -->
+                    <div class="chat-container" id="chatContainer">
+                        <div class="assistant-message message">
+                            <strong>Jarvis:</strong> Hello! I'm your AI assistant. I can help you with:
+                            <ul class="mt-2 mb-0">
+                                <li>Answering questions about AI, technology, and more</li>
+                                <li>Playing music on YouTube</li>
+                                <li>Telling time and date</li>
+                                <li>Opening applications</li>
+                                <li>Searching Google and Wikipedia</li>
+                                <li>Sending emails</li>
+                                <li>General conversation</li>
+                            </ul>
+                            Try saying: "What is AI?" or "Play music on YouTube"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Features Section -->
+        <div class="container-fluid py-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <i class="bi bi-chat-dots-fill" style="font-size: 30px; color: #00ff88;"></i>
+                        <h6 class="mt-2">Smart Chat</h6>
+                        <small>AI-powered conversations</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <i class="bi bi-mic-fill" style="font-size: 30px; color: #00ff88;"></i>
+                        <h6 class="mt-2">Voice Control</h6>
+                        <small>Speak naturally</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <i class="bi bi-search" style="font-size: 30px; color: #00ff88;"></i>
+                        <h6 class="mt-2">Web Search</h6>
+                        <small>Google & Wikipedia</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card text-center">
+                        <i class="bi bi-gear-fill" style="font-size: 30px; color: #00ff88;"></i>
+                        <h6 class="mt-2">Automation</h6>
+                        <small>Tasks & Controls</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="container-fluid py-2">
+            <div class="row justify-content-center">
+                <div class="col-auto">
+                    <button class="btn btn-outline-light btn-sm me-2" onclick="clearChat()">
+                        <i class="bi bi-trash"></i> Clear Chat
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="testTTS()">
+                        <i class="bi bi-volume-up"></i> Test Voice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let isListening = false;
+        
+        $(document).ready(function() {
+            loadChats();
+            
+            // Voice button click
+            $('#voiceBtn, #jarvisCircle').click(function() {
+                if (!isListening) {
+                    startVoiceChat();
+                }
+            });
+            
+            // Send button click
+            $('#sendBtn').click(function() {
+                sendMessage();
+            });
+            
+            // Enter key press
+            $('#chatInput').keypress(function(e) {
+                if (e.which === 13) {
+                    sendMessage();
+                }
+            });
+            
+            // Keyboard shortcuts
+            $(document).keydown(function(e) {
+                if (e.ctrlKey && e.keyCode === 77) { // Ctrl+M
+                    e.preventDefault();
+                    if (!isListening) {
+                        startVoiceChat();
+                    }
+                }
+            });
+        });
+        
+        function startVoiceChat() {
+            isListening = true;
+            $('#jarvisCircle').addClass('listening');
+            $('#statusText').text('Listening... Speak now!');
+            $('#loadingIndicator').show();
+            
+            $.ajax({
+                url: '/api/voice-chat',
+                method: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        addMessage('user', response.recognized_text);
+                        addMessage('assistant', response.ai_response);
+                        $('#statusText').text('Ready for next command');
+                    } else {
+                        $('#statusText').text('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    $('#statusText').text('Voice service error. Please try again.');
+                },
+                complete: function() {
+                    isListening = false;
+                    $('#jarvisCircle').removeClass('listening');
+                    $('#loadingIndicator').hide();
+                    setTimeout(() => {
+                        $('#statusText').text('Click to speak or type below');
+                    }, 3000);
+                }
+            });
+        }
+        
+        function sendMessage() {
+            const message = $('#chatInput').val().trim();
+            if (!message) return;
+            
+            $('#chatInput').val('');
+            $('#loadingIndicator').show();
+            addMessage('user', message);
+            
+            $.ajax({
+                url: '/api/chat/message',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ message: message }),
+                success: function(response) {
+                    if (response.success) {
+                        addMessage('assistant', response.ai_response);
+                    } else {
+                        addMessage('assistant', 'Sorry, I encountered an error.');
+                    }
+                },
+                error: function() {
+                    addMessage('assistant', 'Connection error. Please try again.');
+                },
+                complete: function() {
+                    $('#loadingIndicator').hide();
+                }
+            });
+        }
+        
+        function addMessage(type, text) {
+            const messageClass = type === 'user' ? 'user-message' : 'assistant-message';
+            const sender = type === 'user' ? 'You' : 'Jarvis';
+            
+            const messageHtml = `
+                <div class="message ${messageClass}">
+                    <strong>${sender}:</strong> ${text}
+                </div>
+            `;
+            
+            $('#chatContainer').append(messageHtml);
+            $('#chatContainer').scrollTop($('#chatContainer')[0].scrollHeight);
+        }
+        
+        function loadChats() {
+            $.ajax({
+                url: '/api/chats',
+                method: 'GET',
+                success: function(chats) {
+                    $('#chatContainer').empty();
+                    
+                    // Add welcome message
+                    addMessage('assistant', `Hello! I'm your AI assistant. I can help you with:
+                    <ul class="mt-2 mb-0">
+                        <li>Answering questions about AI, technology, and more</li>
+                        <li>Playing music on YouTube</li>
+                        <li>Telling time and date</li>
+                        <li>Opening applications</li>
+                        <li>Searching Google and Wikipedia</li>
+                        <li>Sending emails</li>
+                        <li>General conversation</li>
+                    </ul>
+                    Try saying: "What is AI?" or "Play music on YouTube"`);
+                    
+                    // Add chat history
+                    chats.forEach(chat => {
+                        addMessage(chat.type, chat.message);
+                    });
+                }
+            });
+        }
+        
+        function clearChat() {
+            if (confirm('Clear all chat history?')) {
+                $.ajax({
+                    url: '/api/chats',
+                    method: 'DELETE',
+                    success: function() {
+                        loadChats();
+                    }
+                });
+            }
+        }
+        
+        function testTTS() {
+            $.ajax({
+                url: '/api/tts/test',
+                method: 'GET',
+                success: function() {
+                    $('#statusText').text('TTS test started - you should hear me speak!');
+                    setTimeout(() => {
+                        $('#statusText').text('Click to speak or type below');
+                    }, 3000);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
