@@ -83,7 +83,7 @@ Daksh AI/
 ### 1️⃣ Clone or Extract the Project
 
 ```bash
-git clone <repository‑url>
+git clone https://github.com/anandthosar03-hub/Daksh-The-Personal-AI-Assistant.git
 cd Daksh-AI
 ```
 
